@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IIT BBS BasBandhu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --white:#FFFFFF;
+    --mint:#F1F9F1;
+    --green:#1E9E52;
+    --green-deep:#146638;
+    --green-tint:#E1F5E6;
+    --orange:#FF7A29;
+    --orange-deep:#D65E14;
+    --orange-tint:#FFE9DA;
+    --ink:#1C2B22;
+    --ink-dim:#6B7A70;
+    --line:#E3EEE4;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--white);
+    color:var(--ink);
+    font-family:'Baloo 2', sans-serif;
+    min-height:100vh;
+    padding-bottom:3rem;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- Header / road banner ---------- */
+  header{
+    background:linear-gradient(180deg, var(--green-tint), var(--white));
+    padding:1.6rem 1.2rem 1.3rem;
+    border-bottom:3px solid var(--green);
+  }
+  .title-row{ max-width:680px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:.7rem; }
+  h1{ font-size:1.35rem; font-weight:800; color:var(--green-deep); }
+  h1 span{ color:var(--orange); }
+  #clock{ font-size:1.05rem; font-weight:700; color:var(--green-deep); letter-spacing:.02em; }
+  .subtitle{ max-width:680px; margin:.2rem auto 0; font-size:.78rem; color:var(--ink-dim); font-family:'JetBrains Mono',monospace; }
+
+  .road{
+    max-width:680px; margin:1rem auto 0; position:relative; height:34px;
+    border-top:4px dashed #C9DFCB;
+  }
+  .bus-drive{
+    position:absolute; top:-24px; left:0;
+    font-size:1.6rem;
+    animation:drive 7s linear infinite;
+  }
+  @keyframes drive{
+    0%{ left:-8%; transform:scaleX(1); }
+    48%{ left:96%; transform:scaleX(1); }
+    50%{ left:96%; transform:scaleX(-1); }
+    98%{ left:-8%; transform:scaleX(-1); }
+    100%{ left:-8%; transform:scaleX(1); }
+  }
+
+  /* ---------- Intro overlay ---------- */
+  #introOverlay{
+    position:fixed; inset:0; z-index:300;
+    background:linear-gradient(180deg, var(--green-tint), var(--white));
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; transition:opacity .7s ease, visibility .7s ease;
+  }
+  #introOverlay.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+  #introOverlay h2{ font-size:1.5rem; font-weight:800; color:var(--green-deep); margin-bottom:.4rem; }
+  #introOverlay p{ color:var(--ink-dim); font-size:.9rem; margin-bottom:1.8rem; }
+  #startBtn{
+    background:var(--orange); color:var(--white); border:none;
+    padding:.8rem 2rem; border-radius:999px; font-family:'Baloo 2',sans-serif;
+    font-weight:700; font-size:1rem; cursor:pointer;
+    box-shadow:0 10px 24px rgba(255,122,41,0.3);
+    transition:transform .2s ease;
+  }
+  #startBtn:hover{ transform:translateY(-2px); }
+  #startBtn.gone{ display:none; }
+  .intro-road{
+    position:relative; width:100%; max-width:520px; height:40px; margin-top:1.5rem;
+    border-top:4px dashed #C9DFCB; display:none;
+  }
+  .intro-road.show{ display:block; }
+  #introBus{
+    position:absolute; top:-30px; left:-15%;
+    font-size:2.4rem;
+  }
+  #introBus.go{ animation:introDrive 1.6s cubic-bezier(.4,0,.2,1) forwards; }
+  @keyframes introDrive{
+    0%{ left:-15%; }
+    100%{ left:105%; }
+  }
+
+  main{ max-width:680px; margin:0 auto; padding:1.3rem 1.2rem 0; }
+
+  /* ---------- From/To ---------- */
+  .route-picker{
+    background:var(--mint); border:2px solid var(--line); border-radius:18px;
+    padding:1rem; display:flex; align-items:center; gap:.6rem; margin-bottom:1rem;
+  }
+  .field{ flex:1; display:flex; flex-direction:column; gap:.3rem; min-width:0; }
+  .field label{ font-size:.7rem; font-weight:700; color:var(--green-deep); letter-spacing:.02em; }
+  select{
+    background:var(--white); border:2px solid var(--line); color:var(--ink);
+    font-family:'Baloo 2', sans-serif; font-weight:600; font-size:.92rem;
+    border-radius:10px; padding:.6rem .6rem; width:100%; appearance:none;
+  }
+  select:focus{ outline:2px solid var(--orange); border-color:var(--orange); }
+  #swapBtn{
+    flex-shrink:0; width:38px; height:38px; border-radius:50%;
+    border:2px solid var(--green); background:var(--white); color:var(--green);
+    font-size:1.05rem; cursor:pointer; margin-top:1.1rem;
+    transition:transform .2s ease, background .2s ease;
+  }
+  #swapBtn:hover{ background:var(--green); color:var(--white); transform:rotate(180deg); }
+
+  /* ---------- Day toggle ---------- */
+  .toggle{ display:flex; border:2px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:.9rem; }
+  .toggle button{
+    flex:1; border:none; padding:.7rem; cursor:pointer;
+    background:var(--white); color:var(--ink-dim); font-family:'Baloo 2',sans-serif;
+    font-weight:700; font-size:.88rem;
+  }
+  .toggle button.active{ background:var(--green); color:var(--white); }
+
+  .chips{ display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.2rem; }
+  .chip{
+    border:2px solid var(--line); background:var(--white);
+    color:var(--ink-dim); font-size:.78rem; font-weight:700;
+    padding:.4rem .8rem; border-radius:999px; cursor:pointer;
+  }
+  .chip.active{ border-color:var(--orange); color:var(--orange-deep); background:var(--orange-tint); }
+
+  /* ---------- Next panel ---------- */
+  .next-panel{
+    background:linear-gradient(135deg, var(--green), var(--green-deep));
+    color:var(--white); border-radius:18px;
+    padding:1.2rem 1.3rem; margin-bottom:1.3rem;
+    display:flex; align-items:center; gap:1rem;
+    box-shadow:0 10px 24px rgba(30,158,82,0.25);
+  }
+  .next-panel .bus-emoji{ font-size:2.2rem; flex-shrink:0; }
+  .next-label{ font-size:.7rem; letter-spacing:.05em; opacity:.85; margin-bottom:.15rem; }
+  .next-time{ font-size:1.7rem; font-weight:800; }
+  .next-eta{ font-size:.85rem; opacity:.9; margin-top:.1rem; }
+  .next-note{ font-size:.85rem; opacity:.95; }
+
+  /* ---------- Departure list ---------- */
+  .section-label{
+    font-size:.78rem; font-weight:700; color:var(--ink-dim);
+    margin:0 0 .6rem; padding-bottom:.4rem; border-bottom:2px solid var(--line);
+  }
+  .dep{
+    display:flex; gap:.9rem; align-items:flex-start;
+    background:var(--white); border:2px solid var(--line); border-radius:14px;
+    padding:.9rem 1rem; margin-bottom:.7rem;
+  }
+  .dep.past{ opacity:.45; }
+  .dep.soon{ border-color:var(--orange); background:var(--orange-tint); }
+  .dep-icon{ font-size:1.4rem; flex-shrink:0; margin-top:.1rem; }
+  .dep-time{ font-size:1.05rem; font-weight:800; color:var(--green-deep); width:4.6rem; flex-shrink:0; }
+  .dep.soon .dep-time{ color:var(--orange-deep); }
+  .dep-body{ flex:1; min-width:0; }
+  .dep-route{ font-size:.86rem; color:var(--ink-dim); line-height:1.5; word-break:break-word; }
+  .dep-route .from-stop{ color:var(--green); font-weight:800; }
+  .dep-route .to-stop{ color:var(--orange-deep); font-weight:800; }
+  .dep-meta{ display:flex; gap:.5rem; margin-top:.45rem; flex-wrap:wrap; align-items:center; }
+  .tag{ font-size:.68rem; font-weight:700; padding:.18rem .55rem; border-radius:6px; }
+  .tag.shuttle{ background:var(--green-tint); color:var(--green-deep); }
+  .tag.city{ background:var(--orange-tint); color:var(--orange-deep); }
+  .tag.niser{ background:#EDE8FF; color:#6A55D6; }
+  .veh{ font-size:.72rem; color:var(--ink-dim); font-weight:600; }
+  .faculty-note{ font-size:.68rem; color:#D6435C; font-weight:700; }
+  .eta-badge{ font-size:.72rem; color:var(--orange-deep); font-weight:700; }
+
+  /* ---------- Empty state ---------- */
+  .empty-state{ text-align:center; color:var(--ink-dim); padding:2.4rem 1rem; }
+  .empty-bus{ font-size:3rem; margin-bottom:.6rem; display:block; }
+  .empty-state p{ font-size:.9rem; }
+
+  footer{
+    max-width:680px; margin:1.8rem auto 0; padding:0 1.2rem;
+    font-size:.76rem; color:var(--ink-dim); line-height:1.7;
+  }
+  footer strong{ color:var(--green-deep); }
+
+  @media (prefers-reduced-motion: reduce){ * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<audio id="hornSound" src="bus-horn.mp3" preload="auto"></audio>
+
+<div id="introOverlay">
+  <h2>IIT BBS <span style="color:var(--orange)">BasBandhu</span></h2>
+  <p>Never miss your shuttle again 🚌</p>
+  <button id="startBtn">Let's go</button>
+  <div class="intro-road" id="introRoad"><div id="introBus">🚌</div></div>
+</div>
+
+<header>
+  <div class="title-row">
+    <h1>IIT BBS <span>BasBandhu</span></h1>
+    <div id="clock" class="mono">--:--:--</div>
+  </div>
+  <div class="subtitle">Schedule valid until 25 September 2026</div>
+  <div class="road"><div class="bus-drive">🚌</div></div>
+</header>
+
+<main>
+  <div class="route-picker">
+    <div class="field">
+      <label for="fromSelect">FROM</label>
+      <select id="fromSelect"></select>
+    </div>
+    <button id="swapBtn" title="Swap from/to">⇄</button>
+    <div class="field">
+      <label for="toSelect">TO</label>
+      <select id="toSelect"></select>
+    </div>
+  </div>
+
+  <div class="toggle" id="dayToggle">
+    <button data-day="weekday" class="active">Mon – Sat</button>
+    <button data-day="sunday">Sun / Holiday</button>
+  </div>
+
+  <div class="chips" id="catChips">
+    <div class="chip active" data-cat="all">All routes</div>
+    <div class="chip" data-cat="shuttle">Campus shuttle</div>
+    <div class="chip" data-cat="city">City ↔ Campus</div>
+    <div class="chip" data-cat="niser">Niser Square</div>
+  </div>
+
+  <div class="next-panel" id="nextPanel"></div>
+
+  <div id="list"></div>
+</main>
+
+<footer>
+  <strong>How to read this:</strong> the time shown is when the bus starts its route — if your stop
+  isn't first, it reaches you a little after that. Seats are first-come-first-served and no extra
+  vehicle is added if a bus is full, per the Transport Office notice.
+</footer>
+
+<script>
+/* =====================================================================
+   SCHEDULE DATA
+   Valid 16.09.2026 – 25.09.2026. To update for a new schedule, just
+   replace the rows in the arrays below — keep the same
+   ['HH:MM', 'STOP-STOP-STOP', ['VEHICLE']] shape. Times are 24-hour.
+   ===================================================================== */
+const STOP_NAMES = {
+  'ABB':'Administrative Building (Backside)', 'AVS':'Acharya Bihar Square', 'AB':'Administrative Building',
+  'GHR':'Ganga Hall of Residence', 'MHR':'Mahanadi Hall of Residence', 'JVS':'Jayadev Vihar Square',
+  'RHR':'Rushikulya Hall of Residence', 'SBS':'School of Basic Sciences',
+  'SHSSM(B)':'School of Humanities, Social Sciences & Mgmt (Backside)', 'SHSSM':'School of Humanities, Social Sciences & Mgmt',
+  'SIF':'School of Infrastructure / Mechanical Sc.', 'LHL(P)':'Lalitgiri Hall of Learning (Parking)',
+  'CC':'Community Centre', 'WSC':'Workshop Complex, City Campus'
+};
+
+function route(str){ return str.split(/-|‐/).map(s=>s.trim()).filter(Boolean); }
+
+const shuttleWeekday = [
+  ['07:30','GHR-SHR-SANGAM-RHR-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B6']],
+  ['08:50','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
+  ['08:50','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4']],
+  ['08:50','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['08:50','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8']],
+  ['09:30','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B2','B3','T1']],
+  ['09:30','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B4','T2']],
+  ['09:30','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B5','B6','B7']],
+  ['09:30','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B8','B1']],
+  ['10:10','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B3']],
+  ['10:10','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B7','B8']],
+  ['11:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2']],
+  ['11:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5']],
+  ['12:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3','B4','T1','T2']],
+  ['12:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7','B8','B1']],
+  ['12:40','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B2','B3','B4','T1','T2']],
+  ['12:40','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B5','B6','B7','B8','B1']],
+  ['13:10','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B2','B3']],
+  ['13:10','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B5','B6','B7']],
+  ['13:50','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3','T1']],
+  ['13:50','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4','T2']],
+  ['13:50','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['13:50','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8','B1']],
+  ['14:30','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B2','B3','T1']],
+  ['14:30','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B4','T2']],
+  ['14:30','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B5','B6','B7']],
+  ['14:30','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B8','B1']],
+  ['15:15','GHR-SANGAM-SHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B4']],
+  ['15:15','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B8']],
+  ['17:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3','B4','T1','T2']],
+  ['17:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7','B8','B1']],
+  ['17:40','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3','B4']],
+  ['17:40','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7','B8']],
+  ['18:15','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B3','B2']],
+  ['18:15','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B5','B6']],
+  ['19:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B4']],
+  ['19:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B7']],
+  ['20:30','SIF-RHL-SHSSM-SBS-ABB-SANGAM-RHR-MHR',['B8']],
+  ['21:30','SIF-RHL-SHSSM-SBS-ABB-SANGAM-RHR-MHR-BHR-CC',['B8']],
+];
+
+const shuttleSunday = [
+  ['08:30','GHR-SHR-SANGAM-RHR-MHR-SBS-SIF-GHR',['B6','B3']],
+  ['10:00','GHR-SHR-SANGAM-RHR-MHR-LHL(P)-SECS-SBS-SIF',['B6','B3']],
+  ['12:30','SIF-SBS-SECS-LHL(P)-SHR-RHR',['B6','B3']],
+  ['13:30','RHR-MHR-GHR-SHR-SBS-SIF-RHR',['B6','B3']],
+  ['14:30','RHR-MHR-GHR-SHR-SBS-SIF-RHR',['B6','B3']],
+  ['15:30','RHR-SHR-SIF',['B3']],
+  ['17:30','SIF-GHR/SHR/BHR',['B3']],
+  ['19:30','SIF-LBC-SBS-RHR/GHR',['B3']],
+];
+
+const cityWeekday = [
+  ['08:00','WSC-AB-SIF-MHR',['B1'], false],
+  ['08:00','WSC-AB-SIF-SANGAM',['T1'], true],
+  ['08:30','WSC-AB-SIF-SANGAM',['T2'], true],
+  ['17:50','SIF-AB-WSC',['T2'], true],
+  ['18:10','SIF-AB-WSC',['T1'], true],
+  ['18:10','SIF-AB-WSC',['B1'], false],
+];
+
+const citySunday = [
+  ['08:00','WSC-AB-SIF',['B1'], false],
+  ['08:30','WSC-AB-SIF',['T1'], false],
+  ['08:30','L Gate-AVS-WSC',['B4'], false],
+  ['10:00','L Gate-AVS-WSC',['B1'], false],
+  ['13:00','L Gate-AVS-WSC',['B2'], false],
+  ['15:00','L Gate-AVS-WSC',['B5'], false],
+  ['15:30','SIF-AB-WSC',['T1'], false],
+  ['17:30','SIF-AB-WSC',['B7'], false],
+  ['18:30','WSC-AVS-L Gate',['B4'], false],
+  ['19:30','WSC-AVS-L Gate',['B2'], false],
+  ['20:30','WSC-AVS-L Gate',['B5'], false],
+  ['21:30','WSC-AVS-L Gate',['B7'], false],
+];
+
+const niserWeekday = [
+  ['18:10','L Gate-Niser square-L Gate',['B4']],
+  ['19:30','L Gate-Niser square-L Gate',['B3']],
+  ['20:30','L Gate-Niser square-L Gate',['B3']],
+];
+
+const niserSunday = [
+  ['08:00','L Gate-Niser square-L Gate',['B6']],
+  ['09:30','L Gate-Niser square-L Gate',['T1']],
+  ['10:30','L Gate-Niser square-L Gate',['T1']],
+  ['12:00','L Gate-Niser square-L Gate',['T1']],
+  ['15:00','L Gate-Niser square-L Gate',['T1']],
+  ['17:00','L Gate-Niser square-L Gate',['B6']],
+  ['18:00','L Gate-Niser square-L Gate',['B6']],
+  ['19:00','L Gate-Niser square-L Gate',['B6']],
+  ['20:00','L Gate-Niser square-L Gate',['B6']],
+  ['21:00','L Gate-Niser square-L Gate',['B6']],
+];
+
+function build(list, cat, day){
+  return list.map(row => ({
+    time: row[0], route: route(row[1]), vehicles: row[2],
+    facultyOnly: !!row[3], cat, day
+  }));
+}
+
+const ALL_TRIPS = [
+  ...build(shuttleWeekday, 'shuttle', 'weekday'),
+  ...build(shuttleSunday, 'shuttle', 'sunday'),
+  ...build(cityWeekday, 'city', 'weekday'),
+  ...build(citySunday, 'city', 'sunday'),
+  ...build(niserWeekday, 'niser', 'weekday'),
+  ...build(niserSunday, 'niser', 'sunday'),
+];
+
+const CAT_LABEL = { shuttle:'Shuttle', city:'City ↔ Campus', niser:'Niser Square' };
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+const fromSelect = document.getElementById('fromSelect');
+const toSelect = document.getElementById('toSelect');
+const swapBtn = document.getElementById('swapBtn');
+const dayToggle = document.getElementById('dayToggle');
+const catChips = document.getElementById('catChips');
+const listEl = document.getElementById('list');
+const nextPanel = document.getElementById('nextPanel');
+
+const todayIsSunday = new Date().getDay() === 0;
+let dayMode = todayIsSunday ? 'sunday' : 'weekday';
+let catMode = 'all';
+
+[...dayToggle.children].forEach(b => b.classList.toggle('active', b.dataset.day === dayMode));
+
+// Build stop lists from every unique stop across all trips
+const stopSet = new Map();
+ALL_TRIPS.forEach(t => t.route.forEach(s => {
+  if(!stopSet.has(s)) stopSet.set(s, STOP_NAMES[s] || s);
+}));
+const sortedStops = [...stopSet.entries()].sort((a,b)=> a[0].localeCompare(b[0]));
+
+fromSelect.innerHTML = `<option value="any">Anywhere</option>` + sortedStops.map(([code,name]) =>
+  `<option value="${code}">${code}${name!==code ? ' — '+name : ''}</option>`
+).join('');
+toSelect.innerHTML = `<option value="any">Anywhere</option>` + sortedStops.map(([code,name]) =>
+  `<option value="${code}">${code}${name!==code ? ' — '+name : ''}</option>`
+).join('');
+
+if(stopSet.has('SIF')) fromSelect.value = 'SIF';
+
+function minutesNow(){ const n = new Date(); return n.getHours()*60 + n.getMinutes(); }
+function toMinutes(t){ const [h,m] = t.split(':').map(Number); return h*60+m; }
+function fmt(t){
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = ((h+11)%12)+1;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+function etaLabel(mins){
+  if(mins < 0) return null;
+  if(mins === 0) return 'departing now';
+  if(mins < 60) return `in ${mins} min`;
+  const h = Math.floor(mins/60), m = mins%60;
+  return `in ${h}h ${m}m`;
+}
+
+function render(){
+  const from = fromSelect.value;
+  const to = toSelect.value;
+  const liveDay = todayIsSunday ? 'sunday' : 'weekday';
+  const isLive = dayMode === liveDay;
+  const now = minutesNow();
+
+  let trips = ALL_TRIPS.filter(t => {
+    if(t.day !== dayMode) return false;
+    if(from !== 'any'){
+      const fi = t.route.indexOf(from);
+      if(fi === -1) return false;
+      if(to !== 'any'){
+        const ti = t.route.indexOf(to);
+        if(ti === -1 || ti <= fi) return false;
+      }
+    } else if(to !== 'any'){
+      if(!t.route.includes(to)) return false;
+    }
+    return true;
+  });
+  if(catMode !== 'all') trips = trips.filter(t => t.cat === catMode);
+  trips.sort((a,b) => toMinutes(a.time) - toMinutes(b.time));
+
+  if(isLive){
+    const upcomingTrips = trips.filter(t => toMinutes(t.time) - now >= 0);
+    const pastTrips = trips.filter(t => toMinutes(t.time) - now < 0);
+    trips = [...upcomingTrips, ...pastTrips];
+  }
+
+  const fromLabel = from === 'any' ? 'ANYWHERE' : from;
+  const routeLabel = `${from === 'any' ? 'any stop' : from}${to!=='any' ? ' to '+to : ''}`;
+
+  // Next panel
+  if(trips.length === 0){
+    nextPanel.innerHTML = `<div class="bus-emoji">🚏</div><div class="next-note">No buses found on this route for the selected day/filter. Try "Anywhere" for To, or switch the day.</div>`;
+  } else if(isLive){
+    const upcoming = trips.filter(t => toMinutes(t.time) >= now);
+    if(upcoming.length){
+      const t = upcoming[0];
+      const mins = toMinutes(t.time) - now;
+      nextPanel.innerHTML = `
+        <div class="bus-emoji">🚌</div>
+        <div>
+          <div class="next-label">NEXT FROM ${fromLabel}${to!=='any' ? ' → '+to : ''}</div>
+          <div class="next-time mono">${fmt(t.time)}</div>
+          <div class="next-eta">${etaLabel(mins)} · ${CAT_LABEL[t.cat]} · ${t.vehicles.join(', ')}</div>
+        </div>`;
+    } else {
+      nextPanel.innerHTML = `<div class="bus-emoji">🌙</div><div class="next-note">No more buses today on this route. First one tomorrow: ${fmt(trips[0].time)}.</div>`;
+    }
+  } else {
+    nextPanel.innerHTML = `<div class="bus-emoji">📅</div><div class="next-note">Showing the ${dayMode === 'sunday' ? 'Sunday/Holiday' : 'Mon–Sat'} schedule — first bus is at ${fmt(trips[0].time)}.</div>`;
+  }
+
+  if(trips.length === 0){
+    listEl.innerHTML = `<div class="empty-state"><span class="empty-bus">🚍💨</span><p>No scheduled buses go from ${routeLabel} on this day. Try a different stop or day.</p></div>`;
+    return;
+  }
+
+  listEl.innerHTML = `<div class="section-label">${dayMode === 'sunday' ? 'SUNDAY / HOLIDAY' : 'MONDAY – SATURDAY'} DEPARTURES</div>` +
+    trips.map((t, idx) => {
+      const mins = toMinutes(t.time) - now;
+      const isPast = isLive && mins < 0;
+      const isSoon = isLive && !isPast && mins <= 15;
+      const prevWasUpcoming = idx > 0 && isLive && (toMinutes(trips[idx-1].time) - now >= 0);
+      const divider = (isPast && (idx === 0 ? false : prevWasUpcoming)) ?
+        `<div class="section-label" style="margin-top:1.2rem;">ALREADY LEFT TODAY</div>` : '';
+      return `
+        ${divider}
+        <div class="dep ${isPast?'past':''} ${isSoon?'soon':''}">
+          <div class="dep-icon">🚌</div>
+          <div class="dep-time mono">${fmt(t.time)}</div>
+          <div class="dep-body">
+            <div class="dep-route">${renderRoute(t.route, from, to)}</div>
+            <div class="dep-meta">
+              <span class="tag ${t.cat}">${CAT_LABEL[t.cat]}</span>
+              <span class="veh mono">${t.vehicles.join(', ')}</span>
+              ${t.facultyOnly ? '<span class="faculty-note">Faculty/officers only</span>' : ''}
+              ${isLive && !isPast ? `<span class="eta-badge">${etaLabel(mins)}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+}
+
+function renderRoute(routeArr, from, to){
+  return routeArr.map(s => {
+    if(s === from) return `<span class="from-stop">${s}</span>`;
+    if(s === to) return `<span class="to-stop">${s}</span>`;
+    return s;
+  }).join(' → ');
+}
+
+fromSelect.addEventListener('change', render);
+toSelect.addEventListener('change', render);
+swapBtn.addEventListener('click', () => {
+  const f = fromSelect.value, t = toSelect.value;
+  if(t !== 'any'){ fromSelect.value = t; toSelect.value = f; }
+  render();
+});
+dayToggle.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  dayMode = btn.dataset.day;
+  [...dayToggle.children].forEach(b => b.classList.toggle('active', b === btn));
+  render();
+});
+catChips.addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  catMode = chip.dataset.cat;
+  [...catChips.children].forEach(c => c.classList.toggle('active', c === chip));
+  if((catMode === 'niser' || catMode === 'city') && stopSet.has('L Gate')){
+    fromSelect.value = 'L Gate';
+  } else if(catMode === 'shuttle'){
+    fromSelect.value = 'any';
+  }
+  render();
+});
+
+setInterval(render, 15000);
+render();
+
+/* =====================================================================
+   LIVE CLOCK
+   ===================================================================== */
+const clockEl = document.getElementById('clock');
+function tickClock(){
+  const n = new Date();
+  const h = String(n.getHours()).padStart(2,'0');
+  const m = String(n.getMinutes()).padStart(2,'0');
+  const s = String(n.getSeconds()).padStart(2,'0');
+  clockEl.textContent = `${h}:${m}:${s}`;
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+/* =====================================================================
+   INTRO — bus horn honk + drive-across, then reveal the site
+   ===================================================================== */
+function playHonk(){
+  const sound = document.getElementById('hornSound');
+  sound.currentTime = 0;
+  sound.play().catch(()=>{ /* if autoplay is blocked, the drive animation still plays */ });
+}
+
+const introOverlay = document.getElementById('introOverlay');
+const startBtn = document.getElementById('startBtn');
+const introRoad = document.getElementById('introRoad');
+const introBus = document.getElementById('introBus');
+
+startBtn.addEventListener('click', () => {
+  startBtn.classList.add('gone');
+  introRoad.classList.add('show');
+  playHonk();
+  introBus.classList.add('go');
+  setTimeout(() => { introOverlay.classList.add('hidden'); }, 1700);
+});
+
+</script>
+</body>
+</html>
