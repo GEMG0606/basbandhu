@@ -54,4 +54,5 @@ For a new notice:
 
 ## Credits
 
-Built by Sriram G. Schedule data from the IIT Bhubaneswar Transport Office notice.
+Built by Sriram G. 
+Schedule data from the IIT Bhubaneswar Transport Office notice.
