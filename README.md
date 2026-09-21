@@ -2,7 +2,7 @@
 
 *"Never miss your shuttle again."*
 
-A live campus bus timetable for IIT Bhubaneswar. Pick where you are and where you are going, and see the next bus with a countdown, plus every departure for the day. The schedule follows the Transport Office notice, currently valid **16 to 25 September 2026**.
+A live campus bus timetable for IIT Bhubaneswar. Pick where you are and where you are going, and see the next bus with a countdown, plus every departure for the day. The schedule follows the Transport Office notice.
 
 ## Features
 
