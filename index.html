@@ -205,7 +205,7 @@
     <h1>IIT BBS <span>BasBandhu</span></h1>
     <div id="clock" class="mono">--:--:--</div>
   </div>
-  <div class="subtitle">Schedule valid until 25 September 2026</div>
+  <div class="subtitle" id="scheduleSubtitle">Current schedule — effective 26 September 2026</div>
   <div class="road"><div class="bus-drive">🚌</div></div>
 </header>
 
@@ -223,8 +223,8 @@
   </div>
 
   <div class="toggle" id="dayToggle">
-    <button data-day="weekday" class="active">Mon – Sat</button>
-    <button data-day="sunday">Sun / Holiday</button>
+    <button data-day="weekday" class="active">Mon – Fri</button>
+    <button data-day="sunday">Sat / Sun / Holiday</button>
   </div>
 
   <div class="chips" id="catChips">
@@ -248,7 +248,10 @@
 <script>
 /* =====================================================================
    SCHEDULE DATA
-   Valid 16.09.2026 – 25.09.2026. To update for a new schedule, just
+   Effective 26 September 2026 (per IIT Bhubaneswar Transport Office
+   notice w.e.f. 26.09.2026). Day split: Mon-Fri vs Sat/Sun/Holiday.
+   We keep the internal tags 'weekday' / 'sunday' for Mon-Fri and
+   Sat/Sun/Holiday respectively. To update for a future schedule, just
    replace the rows in the arrays below — keep the same
    ['HH:MM', 'STOP-STOP-STOP', ['VEHICLE']] shape. Times are 24-hour.
    ===================================================================== */
@@ -263,52 +266,81 @@ const STOP_NAMES = {
 
 function route(str){ return str.split(/-|‐/).map(s=>s.trim()).filter(Boolean); }
 
-const shuttleWeekday = [
-  ['07:30','GHR-SHR-SANGAM-RHR-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B6']],
-  ['08:50','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
-  ['08:50','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4']],
-  ['08:50','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
-  ['08:50','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8']],
-  ['09:30','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B2','B3','T1']],
-  ['09:30','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B4','T2']],
-  ['09:30','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B5','B6','B7']],
-  ['09:30','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B8','B1']],
-  ['10:10','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B3']],
-  ['10:10','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B7','B8']],
-  ['11:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2']],
-  ['11:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5']],
-  ['12:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3','B4','T1','T2']],
-  ['12:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7','B8','B1']],
-  ['12:40','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B2','B3','B4','T1','T2']],
-  ['12:40','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B5','B6','B7','B8','B1']],
-  ['13:10','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B2','B3']],
-  ['13:10','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B5','B6','B7']],
-  ['13:50','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3','T1']],
-  ['13:50','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4','T2']],
-  ['13:50','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
-  ['13:50','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8','B1']],
-  ['14:30','GHR-SHR-SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B2','B3','T1']],
-  ['14:30','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B4','T2']],
-  ['14:30','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B5','B6','B7']],
-  ['14:30','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B8','B1']],
-  ['15:15','GHR-SANGAM-SHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B4']],
-  ['15:15','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B8']],
-  ['17:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3','B4','T1','T2']],
-  ['17:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7','B8','B1']],
-  ['17:40','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3','B4']],
-  ['17:40','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7','B8']],
-  ['18:15','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B3','B2']],
-  ['18:15','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B5','B6']],
+const shuttleWorkingDays_new = [
+  ['07:15','SANGAM-SHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2']],
+  ['07:15','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5']],
+  ['07:45','SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
+  ['07:45','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4']],
+  ['07:45','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['07:45','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8']],
+  ['08:15','SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
+  ['08:15','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4']],
+  ['08:15','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['08:15','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8']],
+  ['08:45','SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
+  ['08:45','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4']],
+  ['08:45','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['08:45','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8']],
+  ['09:15','SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
+  ['09:15','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4']],
+  ['09:15','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['09:15','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8']],
+  ['09:45','SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
+  ['09:45','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B4']],
+  ['09:45','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['09:45','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B8']],
+  ['10:00','SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['T1','T2']],
+  ['10:00','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B1']],
+  ['10:30','SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B3']],
+  ['10:30','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B7','B8']],
+  ['11:00','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['T1','T2']],
+  ['11:00','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B6']],
+  ['11:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B3']],
+  ['11:05','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B7','B8']],
+  ['11:30','SANGAM-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B2']],
+  ['11:30','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B5','B6']],
+  ['12:00','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3','B4','T1','T2']],
+  ['12:00','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7','B8','B1']],
+  ['12:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B4','T1','T2']],
+  ['12:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B7','B8','B1']],
+  ['13:00','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3','B4','T1','T2']],
+  ['13:00','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7','B8','B1']],
+  ['13:15','SANGAM-SHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
+  ['13:15','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['13:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['T1','T2']],
+  ['13:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B1']],
+  ['13:45','SANGAM-SHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['B4']],
+  ['13:45','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B1','B8']],
+  ['14:15','SANGAM-SHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-SANGAM',['B2','B3']],
+  ['14:15','GHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-GHR',['T1','T2','B4']],
+  ['14:15','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-RHR',['B5','B6','B7']],
+  ['14:15','MHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF-MHR',['B1','B8']],
+  ['14:45','SANGAM-SHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B2']],
+  ['14:45','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B5','B6']],
+  ['15:15','SANGAM-SHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B3','B4']],
+  ['15:15','RHR-ABB-LHL(P)-AB-SECS-SBS-SHSSM(B)-SIF',['B1','B7','B8']],
+  ['16:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B2','B3']],
+  ['16:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6','B7']],
+  ['16:35','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B4']],
+  ['16:35','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B8']],
+  ['17:35','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-L Gate',['B2','B3']],
+  ['17:35','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B5','B6']],
+  ['17:45','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM-SIF',['B4']],
+  ['17:45','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR-SIF',['B7','B8']],
+  ['18:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B2']],
+  ['18:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B5']],
+  ['18:35','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B4']],
+  ['18:35','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B6']],
   ['19:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-SANGAM',['B4']],
   ['19:30','SIF-SHSSM(B)-SBS-SECS-AB-LHL(P)-ABB-RHR',['B7']],
   ['20:30','SIF-RHL-SHSSM-SBS-ABB-SANGAM-RHR-MHR',['B8']],
   ['21:30','SIF-RHL-SHSSM-SBS-ABB-SANGAM-RHR-MHR-BHR-CC',['B8']],
 ];
 
-const shuttleSunday = [
+const shuttleWeekendHoliday_new = [
   ['08:30','GHR-SHR-SANGAM-RHR-MHR-SBS-SIF-GHR',['B6','B3']],
-  ['10:00','GHR-SHR-SANGAM-RHR-MHR-LHL(P)-SECS-SBS-SIF',['B6','B3']],
-  ['12:30','SIF-SBS-SECS-LHL(P)-SHR-RHR',['B6','B3']],
+  ['09:45','GHR-SHR-SANGAM-RHR-MHR-SBS-SIF',['B6','B3']],
+  ['12:30','SIF-SBS-SHR-RHR',['B6','B3']],
   ['13:30','RHR-MHR-GHR-SHR-SBS-SIF-RHR',['B6','B3']],
   ['14:30','RHR-MHR-GHR-SHR-SBS-SIF-RHR',['B6','B3']],
   ['15:30','RHR-SHR-SIF',['B3']],
@@ -316,8 +348,8 @@ const shuttleSunday = [
   ['19:30','SIF-LBC-SBS-RHR/GHR',['B3']],
 ];
 
-const cityWeekday = [
-  ['08:00','WSC-AB-SIF-MHR',['B1'], false],
+const cityWorkingDays_new = [
+  ['08:00','WSC-AB-SIF-RHR',['B1'], false],
   ['08:00','WSC-AB-SIF-SANGAM',['T1'], true],
   ['08:30','WSC-AB-SIF-SANGAM',['T2'], true],
   ['17:50','SIF-AB-WSC',['T2'], true],
@@ -325,7 +357,7 @@ const cityWeekday = [
   ['18:10','SIF-AB-WSC',['B1'], false],
 ];
 
-const citySunday = [
+const cityWeekendHoliday_new = [
   ['08:00','WSC-AB-SIF',['B1'], false],
   ['08:30','WSC-AB-SIF',['T1'], false],
   ['08:30','L Gate-AVS-WSC',['B4'], false],
@@ -340,13 +372,15 @@ const citySunday = [
   ['21:30','WSC-AVS-L Gate',['B7'], false],
 ];
 
-const niserWeekday = [
-  ['18:10','L Gate-Niser square-L Gate',['B4']],
+const niserWorkingDays_new = [
+  ['15:00','L Gate-Niser square-L Gate',['T2']],
+  ['16:00','L Gate-Niser square-L Gate',['T2']],
+  ['18:10','L Gate-Niser square-L Gate',['B3']],
   ['19:30','L Gate-Niser square-L Gate',['B3']],
   ['20:30','L Gate-Niser square-L Gate',['B3']],
 ];
 
-const niserSunday = [
+const niserWeekendHoliday_new = [
   ['08:00','L Gate-Niser square-L Gate',['B6']],
   ['09:30','L Gate-Niser square-L Gate',['T1']],
   ['10:30','L Gate-Niser square-L Gate',['T1']],
@@ -367,12 +401,12 @@ function build(list, cat, day){
 }
 
 const ALL_TRIPS = [
-  ...build(shuttleWeekday, 'shuttle', 'weekday'),
-  ...build(shuttleSunday, 'shuttle', 'sunday'),
-  ...build(cityWeekday, 'city', 'weekday'),
-  ...build(citySunday, 'city', 'sunday'),
-  ...build(niserWeekday, 'niser', 'weekday'),
-  ...build(niserSunday, 'niser', 'sunday'),
+  ...build(shuttleWorkingDays_new, 'shuttle', 'weekday'),
+  ...build(shuttleWeekendHoliday_new, 'shuttle', 'sunday'),
+  ...build(cityWorkingDays_new, 'city', 'weekday'),
+  ...build(cityWeekendHoliday_new, 'city', 'sunday'),
+  ...build(niserWorkingDays_new, 'niser', 'weekday'),
+  ...build(niserWeekendHoliday_new, 'niser', 'sunday'),
 ];
 
 const CAT_LABEL = { shuttle:'Shuttle', city:'City ↔ Campus', niser:'Niser Square' };
@@ -388,8 +422,10 @@ const catChips = document.getElementById('catChips');
 const listEl = document.getElementById('list');
 const nextPanel = document.getElementById('nextPanel');
 
-const todayIsSunday = new Date().getDay() === 0;
-let dayMode = todayIsSunday ? 'sunday' : 'weekday';
+// Saturday, Sunday, and holidays all fall in the "Sat/Sun/Holiday" bucket.
+const _dow = new Date().getDay(); // 0 = Sunday ... 6 = Saturday
+const todayIsWeekendBucket = (_dow === 0 || _dow === 6);
+let dayMode = todayIsWeekendBucket ? 'sunday' : 'weekday';
 let catMode = 'all';
 
 [...dayToggle.children].forEach(b => b.classList.toggle('active', b.dataset.day === dayMode));
@@ -429,7 +465,7 @@ function etaLabel(mins){
 function render(){
   const from = fromSelect.value;
   const to = toSelect.value;
-  const liveDay = todayIsSunday ? 'sunday' : 'weekday';
+  const liveDay = todayIsWeekendBucket ? 'sunday' : 'weekday';
   const isLive = dayMode === liveDay;
   const now = minutesNow();
 
@@ -478,7 +514,7 @@ function render(){
       nextPanel.innerHTML = `<div class="bus-emoji">🌙</div><div class="next-note">No more buses today on this route. First one tomorrow: ${fmt(trips[0].time)}.</div>`;
     }
   } else {
-    nextPanel.innerHTML = `<div class="bus-emoji">📅</div><div class="next-note">Showing the ${dayMode === 'sunday' ? 'Sunday/Holiday' : 'Mon–Sat'} schedule — first bus is at ${fmt(trips[0].time)}.</div>`;
+    nextPanel.innerHTML = `<div class="bus-emoji">📅</div><div class="next-note">Showing the ${dayMode === 'sunday' ? 'Sat/Sun/Holiday' : 'Mon–Fri'} schedule — first bus is at ${fmt(trips[0].time)}.</div>`;
   }
 
   if(trips.length === 0){
@@ -486,7 +522,7 @@ function render(){
     return;
   }
 
-  listEl.innerHTML = `<div class="section-label">${dayMode === 'sunday' ? 'SUNDAY / HOLIDAY' : 'MONDAY – SATURDAY'} DEPARTURES</div>` +
+  listEl.innerHTML = `<div class="section-label">${dayMode === 'sunday' ? 'SAT / SUN / HOLIDAY' : 'MONDAY – FRIDAY'} DEPARTURES</div>` +
     trips.map((t, idx) => {
       const mins = toMinutes(t.time) - now;
       const isPast = isLive && mins < 0;
